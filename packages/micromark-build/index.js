@@ -67,7 +67,7 @@ while (++index < files.length) {
           ]
         }
       ],
-      'babel-plugin-undebug',
+      removeDebugLog,
       ['babel-plugin-inline-constants', {modules}]
     ]
   })
@@ -79,4 +79,38 @@ while (++index < files.length) {
   console.log('%s (from `%s`)', outputRelative, inputRelative)
 
   await fs.writeFile(output, result.code)
+}
+
+/**
+ *  @import {PluginObj} from '@babel/core'
+ *
+ * @param {{types: typeof import('@babel/core').types}} api
+ *   Babel API.
+ * @returns {PluginObj}
+ *   Babel plugin.
+ */
+function removeDebugLog({types: t}) {
+  return {
+    name: 'remove-logdebug',
+    visitor: {
+      CallExpression(path) {
+        const callee = path.node.callee
+
+        // Remove `logDebug()`.
+        if (t.isIdentifier(callee, {name: 'logDebug'})) {
+          path.remove()
+        } else if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, {name: 'logDebug'})
+        ) {
+          path.remove()
+        }
+      },
+      FunctionDeclaration(path) {
+        if (t.isIdentifier(path.node.id, {name: 'logDebug'})) {
+          path.remove()
+        }
+      }
+    }
+  }
 }
