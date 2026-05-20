@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/**
+ * @import {PluginObj} from '@babel/core'
+ */
 
 // A tiny CLI to get (`.d.ts` and) `.js` files from `dev/`, make them ready for
 // production, and place them a directory higher.
@@ -7,7 +10,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {transformAsync as babel} from '@babel/core'
+import {transformAsync as babel, types as t} from '@babel/core'
 import {glob} from 'glob'
 import {resolve} from 'import-meta-resolve'
 // @ts-expect-error: untyped.
@@ -82,14 +85,9 @@ while (++index < files.length) {
 }
 
 /**
- *  @import {PluginObj} from '@babel/core'
- *
- * @param {{types: typeof import('@babel/core').types}} api
- *   Babel API.
  * @returns {PluginObj}
- *   Babel plugin.
  */
-function removeDebugLog({types: t}) {
+function removeDebugLog() {
   const name = '$logDebug'
 
   return {
