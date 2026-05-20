@@ -177,7 +177,7 @@ export function createTokenizer(parser, initialize, from) {
   function defineSkip(value) {
     columnStart[value.line] = value.column
     accountForPotentialSkip()
-    $logDebug(`position: define skip: ${JSON.stringify(point)}`)
+    $logDebug('position: define skip:', point)
   }
 
   //
@@ -233,7 +233,7 @@ export function createTokenizer(parser, initialize, from) {
   function go(code) {
     assert(consumed === true, 'expected character to be consumed')
     consumed = undefined
-    $logDebug(`main: passing ${code} to ${state && state.name}`)
+    $logDebug('main: passing', code, 'to', state && state.name)
     expectedCode = code
     assert(typeof state === 'function', 'expected state')
     state = state(code)
@@ -243,7 +243,7 @@ export function createTokenizer(parser, initialize, from) {
   function consume(code) {
     assert(code === expectedCode, 'expected given code to equal expected code')
 
-    $logDebug(`consume: ${code}`)
+    $logDebug('consume:', code)
 
     assert(
       consumed === undefined,
@@ -262,7 +262,7 @@ export function createTokenizer(parser, initialize, from) {
       point.column = 1
       point.offset += code === codes.carriageReturnLineFeed ? 2 : 1
       accountForPotentialSkip()
-      $logDebug(`position: after eol: ${point}`)
+      $logDebug('position: after eol:', point)
     } else if (code !== codes.virtualSpace) {
       point.column++
       point.offset++
@@ -303,7 +303,7 @@ export function createTokenizer(parser, initialize, from) {
 
     assert(typeof type === 'string', 'expected string type')
     assert(type.length > 0, 'expected non-empty string')
-    $logDebug(`enter: ${type}`)
+    $logDebug('enter:', type)
 
     context.events.push(['enter', token, context])
 
@@ -331,7 +331,7 @@ export function createTokenizer(parser, initialize, from) {
       'expected non-empty token (`' + type + '`)'
     )
 
-    $logDebug(`exit: ${token.type}`)
+    $logDebug('exit:', token.type)
     context.events.push(['exit', token, context])
 
     return token
@@ -577,7 +577,7 @@ export function createTokenizer(parser, initialize, from) {
       context.events.length = startEventsIndex
       stack = startStack
       accountForPotentialSkip()
-      $logDebug(`position: restore: ${JSON.stringify(point)}`)
+      $logDebug('position: restore:', point)
     }
   }
 
@@ -713,7 +713,7 @@ function serializeChunks(chunks, expandTabs) {
   return result.join('')
 }
 
-/** @param {string} v  */
-function $logDebug(v) {
-  console.log(`[micromark] ${v}`)
-}
+const $logDebug =
+  typeof process !== 'undefined' && process.env.DEBUG?.includes('micromark')
+    ? console.debug.bind(console, '[micromark]')
+    : () => {}

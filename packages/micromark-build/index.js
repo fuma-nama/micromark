@@ -106,8 +106,11 @@ function removeDebugLog() {
           path.remove()
         }
       },
-      FunctionDeclaration(path) {
-        if (t.isIdentifier(path.node.id, {name})) {
+      VariableDeclaration(path) {
+        if (
+          path.node.declarations.length === 1 &&
+          t.isIdentifier(path.node.declarations[0].id, {name})
+        ) {
           path.remove()
         }
       }
