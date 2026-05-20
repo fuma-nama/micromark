@@ -90,24 +90,26 @@ while (++index < files.length) {
  *   Babel plugin.
  */
 function removeDebugLog({types: t}) {
+  const name = '$logDebug'
+
   return {
     name: 'remove-logdebug',
     visitor: {
       CallExpression(path) {
         const callee = path.node.callee
 
-        // Remove `logDebug()`.
-        if (t.isIdentifier(callee, {name: 'logDebug'})) {
+        // Remove `$logDebug()`.
+        if (t.isIdentifier(callee, {name})) {
           path.remove()
         } else if (
           t.isMemberExpression(callee) &&
-          t.isIdentifier(callee.property, {name: 'logDebug'})
+          t.isIdentifier(callee.property, {name})
         ) {
           path.remove()
         }
       },
       FunctionDeclaration(path) {
-        if (t.isIdentifier(path.node.id, {name: 'logDebug'})) {
+        if (t.isIdentifier(path.node.id, {name})) {
           path.remove()
         }
       }
