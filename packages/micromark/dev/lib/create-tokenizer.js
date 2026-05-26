@@ -42,6 +42,7 @@ import {markdownLineEnding} from 'micromark-util-character'
 import {push, splice} from 'micromark-util-chunked'
 import {resolveAll} from 'micromark-util-resolve-all'
 import {codes, values} from 'micromark-util-symbol'
+import {IS_DEBUG} from '../debug.js'
 
 /**
  * Create a tokenizer.
@@ -177,7 +178,7 @@ export function createTokenizer(parser, initialize, from) {
   function defineSkip(value) {
     columnStart[value.line] = value.column
     accountForPotentialSkip()
-    $logDebug('position: define skip:', point)
+    if (IS_DEBUG) console.debug('[micromark] position: define skip:', point)
   }
 
   //
@@ -233,7 +234,13 @@ export function createTokenizer(parser, initialize, from) {
   function go(code) {
     assert(consumed === true, 'expected character to be consumed')
     consumed = undefined
-    $logDebug('main: passing', code, 'to', state && state.name)
+    if (IS_DEBUG)
+      console.debug(
+        '[micromark] main: passing',
+        code,
+        'to',
+        state && state.name
+      )
     expectedCode = code
     assert(typeof state === 'function', 'expected state')
     state = state(code)
@@ -243,7 +250,7 @@ export function createTokenizer(parser, initialize, from) {
   function consume(code) {
     assert(code === expectedCode, 'expected given code to equal expected code')
 
-    $logDebug('consume:', code)
+    if (IS_DEBUG) console.debug('[micromark] consume:', code)
 
     assert(
       consumed === undefined,
@@ -262,7 +269,7 @@ export function createTokenizer(parser, initialize, from) {
       point.column = 1
       point.offset += code === codes.carriageReturnLineFeed ? 2 : 1
       accountForPotentialSkip()
-      $logDebug('position: after eol:', point)
+      if (IS_DEBUG) console.debug('[micromark] position: after eol:', point)
     } else if (code !== codes.virtualSpace) {
       point.column++
       point.offset++
@@ -303,7 +310,7 @@ export function createTokenizer(parser, initialize, from) {
 
     assert(typeof type === 'string', 'expected string type')
     assert(type.length > 0, 'expected non-empty string')
-    $logDebug('enter:', type)
+    if (IS_DEBUG) console.debug('[micromark] enter:', type)
 
     context.events.push(['enter', token, context])
 
@@ -331,7 +338,7 @@ export function createTokenizer(parser, initialize, from) {
       'expected non-empty token (`' + type + '`)'
     )
 
-    $logDebug('exit:', token.type)
+    if (IS_DEBUG) console.debug('[micromark] exit:', token.type)
     context.events.push(['exit', token, context])
 
     return token
@@ -577,7 +584,7 @@ export function createTokenizer(parser, initialize, from) {
       context.events.length = startEventsIndex
       stack = startStack
       accountForPotentialSkip()
-      $logDebug('position: restore:', point)
+      if (IS_DEBUG) console.debug('[micromark] position: restore:', point)
     }
   }
 
@@ -712,8 +719,3 @@ function serializeChunks(chunks, expandTabs) {
 
   return result.join('')
 }
-
-const $logDebug =
-  typeof process !== 'undefined' && process.env.DEBUG?.includes('micromark')
-    ? console.debug.bind(console, '[micromark]')
-    : () => {}

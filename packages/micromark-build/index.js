@@ -17,11 +17,16 @@ import {resolve} from 'import-meta-resolve'
 import RelativizeUrl from 'relativize-url'
 
 const root = pathToFileURL(process.cwd())
+const debugConstantPath = pathToFileURL(
+  path.join(process.cwd(), 'dev/debug.js')
+)
 const files = await glob('./dev/**/*{.d.ts.map,.d.ts,.js}', {cwd: root})
 let index = -1
 
 while (++index < files.length) {
   const input = new URL(files[index], root + '/')
+  if (input.href === debugConstantPath.href) continue
+
   const output = new URL(input.href.replace(/\/dev\/(?!.*\/dev\/)/, '/'))
   const inputRelative = RelativizeUrl.relativize(input, root)
   const outputRelative = RelativizeUrl.relativize(output, root)
@@ -54,7 +59,13 @@ while (++index < files.length) {
     })
     .filter(Boolean)
 
-  const result = await babel(String(await fs.readFile(input)), {
+  // Check if ./debug.js file exists before inlining
+  try {
+    await fs.access(debugConstantPath)
+    modules.push(debugConstantPath.href)
+  } catch {}
+
+  const result = await babel(await fs.readFile(input, 'utf-8'), {
     filename: fileURLToPath(input),
     plugins: [
       [
@@ -70,8 +81,8 @@ while (++index < files.length) {
           ]
         }
       ],
-      removeDebugLog,
-      ['babel-plugin-inline-constants', {modules}]
+      ['babel-plugin-inline-constants', {modules}],
+      'babel-plugin-minify-dead-code-elimination'
     ]
   })
 
@@ -82,38 +93,4 @@ while (++index < files.length) {
   console.log('%s (from `%s`)', outputRelative, inputRelative)
 
   await fs.writeFile(output, result.code)
-}
-
-/**
- * @returns {PluginObj}
- */
-function removeDebugLog() {
-  const name = '$logDebug'
-
-  return {
-    name: 'remove-logdebug',
-    visitor: {
-      CallExpression(path) {
-        const callee = path.node.callee
-
-        // Remove `$logDebug()`.
-        if (t.isIdentifier(callee, {name})) {
-          path.remove()
-        } else if (
-          t.isMemberExpression(callee) &&
-          t.isIdentifier(callee.property, {name})
-        ) {
-          path.remove()
-        }
-      },
-      VariableDeclaration(path) {
-        if (
-          path.node.declarations.length === 1 &&
-          t.isIdentifier(path.node.declarations[0].id, {name})
-        ) {
-          path.remove()
-        }
-      }
-    }
-  }
 }
