@@ -1,3 +1,6 @@
+/* This code runs on both browser & server, the default require("process") rule will break under browser environments */
+/* eslint n/prefer-global/process: [error] */
+
 /** @param {string} namespace */
 const isDebugFunction = (namespace) => {
   if (typeof process !== 'undefined' && process.env.DEBUG) {
@@ -6,15 +9,8 @@ const isDebugFunction = (namespace) => {
 
     let v = false
     for (const item of namespaces) {
-      switch (item) {
-        case '*':
-        case namespace:
-          v = true
-          break
-        case `-${namespace}`:
-          v = false
-          break
-      }
+      if (item === '*' || item === namespace) v = true
+      else if (item === `-${namespace}`) v = false
     }
     return v
   }

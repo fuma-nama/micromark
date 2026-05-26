@@ -10,7 +10,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {transformAsync as babel, types as t} from '@babel/core'
+import {transformAsync as babel} from '@babel/core'
 import {glob} from 'glob'
 import {resolve} from 'import-meta-resolve'
 // @ts-expect-error: untyped.
